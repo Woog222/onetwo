@@ -17,6 +17,15 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
+## REST Framework
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+@api_view(['GET'])
+def test_api(request):
+    return Response({"message": "Hello from Django REST Framework!"})
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/test/', test_api), # Our new endpoint
 ]
