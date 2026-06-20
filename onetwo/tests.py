@@ -1,3 +1,65 @@
 from django.test import TestCase
+from django.urls import reverse
+import datetime, json, random
 
-# Create your tests here.
+from .utils import get_which_day, get_random_cheering_msg, CHEERING_MESSAGES_12, DAY_OF_WEEK, get_weather_forecast, time2korean_str, make_weather_summary_text
+
+class TestUtils(TestCase):  
+    def test_get_random_cheering_msg(self):
+        result = get_random_cheering_msg()
+        self.assertIsInstance(result, str)
+        self.assertTrue(result in CHEERING_MESSAGES_12)
+
+    def test_get_which_day(self):
+        self.assertEqual(get_which_day(year = 2026, month = 6, day = 20), "토요일")
+        self.assertEqual(get_which_day(year = 2026, month = 6, day = 21), "일요일")
+        self.assertEqual(get_which_day(year = 2026, month = 6, day = 22), "월요일")
+        self.assertEqual(get_which_day(year = 2026, month = 6, day = 23), "화요일")
+        self.assertEqual(get_which_day(year = 2026, month = 6, day = 24), "수요일")
+        self.assertEqual(get_which_day(year = 2026, month = 6, day = 25), "목요일")
+        self.assertEqual(get_which_day(year = 2026, month = 6, day = 26), "금요일")
+        
+
+    def test_get_weather_forecast(self):
+        
+        # too old date
+        result = get_weather_forecast(base_date = "20250620", base_time = "1000") # too old date
+        self.assertTrue(isinstance(result, str))
+        self.assertTrue(result.startswith("기상예보 데이터 조회 실패."))
+        
+        # current date
+        today = datetime.datetime.today()
+        base_date = today.strftime("%Y%m%d")
+        base_time = today.strftime("%H%M")
+        result = get_weather_forecast(base_date = base_date, base_time = base_time)
+        self.assertTrue(isinstance(result, str))
+        self.assertTrue(result.startswith(f"{time2korean_str(base_date, base_time)} 기준 기상예보 데이터입니다."))
+        
+    def test_make_weather_summary_text(self):
+        result = make_weather_summary_text(
+            fcst_date = "20260620", 
+            fcst_time = "1000", 
+            t1h_value = "22.0", 
+            reh_value = "70", 
+            wsd_value = "0.1", 
+            rn1_value = "강수없음", 
+            sky_value = "1", 
+            pty_value = "0"
+        )
+        result2 = make_weather_summary_text(
+            fcst_date="20260621", 
+            fcst_time="1230", 
+            t1h_value="22.0", 
+            reh_value="70", 
+            wsd_value="0.1", 
+            rn1_value="11.0mm", 
+            sky_value="1", 
+        pty_value="0")
+        self.assertTrue(isinstance(result, str));self.assertTrue(isinstance(result2, str));
+        self.assertEqual(result, "2026년 06월 20일 10시 00분 기준 기온 22.0℃, 습도 70%, 풍속 0.1m/s, 강수량 0.0mm, 하늘상태 맑음, 강수형태 없음이 예상됩니다.")
+        self.assertEqual(result2, "2026년 06월 21일 12시 30분 기준 기온 22.0℃, 습도 70%, 풍속 0.1m/s, 강수량 11.0mm, 하늘상태 맑음, 강수형태 없음이 예상됩니다.")
+        
+    def test_time2korean_str(self):
+        result = time2korean_str(base_date = "20260620", base_time = "1000")
+        self.assertTrue(isinstance(result, str))
+        self.assertTrue(result.startswith("2026년 06월 20일 10시 00분"))
