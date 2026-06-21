@@ -3,7 +3,7 @@ from rest_framework.response import Response
 
 import datetime
 
-from .utils import get_random_cheering_msg, get_which_day, get_weather_forecast
+from .utils import get_random_cheering_msg, get_weather_forecast, GREETING_MESSAGES_BY_PERIOD, get_time_greeting
 
 import logging
 
@@ -17,8 +17,26 @@ def hello(request):
     """
     Return a random cheering message
     """
-    
     data = {
+        "version": "2.0",
+        "template": {
+            "outputs": [
+                {
+                    "simpleText": {
+                        "text": get_time_greeting()
+                    }
+                }
+            ]
+        }
+    }
+    return Response(data = data)
+
+@api_view(['GET', 'POST'])
+def enchant_team(request):
+    """
+    Return an enchanting message for the team
+    """
+    data= {
         "version": "2.0",
         "template": {
             "outputs": [
@@ -32,6 +50,7 @@ def hello(request):
     }
     return Response(data = data)
     
+    
 @api_view(['GET', 'POST'])
 def weather(request):
     """
@@ -39,7 +58,7 @@ def weather(request):
     """
     today = datetime.datetime.today()
     base_date = today.strftime("%Y%m%d")
-    base_time = today.strftime("%H%M")
+    base_time = today.strftime("%H00") # 1H interval time
     weather_forecast = get_weather_forecast(base_date = base_date, base_time = base_time)
     
     data = {
@@ -55,6 +74,57 @@ def weather(request):
         }
     }
     return Response(data = data)
+    
+@api_view(['GET', 'POST'])
+def calculate(request):
+    """
+    Calculate the given expression
+    """
+    
+    logger.debug(request.data)
+    expression = request.data['action']['params']['expression']
+    try:
+        result = evaluate_expression(expression)
+    except Exception as e:
+        result = f"Error: {e}"
+        
+    data = {
+        "version": "2.0",
+        "template": {
+            "outputs": [
+                {
+                    "simpleText": {
+                        "text": result
+                    }
+                }
+            ]
+        }
+    }
+    return Response(data = data)
+                    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
 # @api_view(['GET', 'POST'])
 # def which_day(request):

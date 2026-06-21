@@ -1,8 +1,20 @@
 from django.test import TestCase
 from django.urls import reverse
-import datetime, json, random
+import datetime, json, random, logging
 
-from .utils import get_which_day, get_random_cheering_msg, CHEERING_MESSAGES_12, DAY_OF_WEEK, get_weather_forecast, time2korean_str, make_weather_summary_text
+from .utils import (
+    get_random_cheering_msg, 
+    CHEERING_MESSAGES_12, 
+    get_weather_forecast, 
+    time2korean_str, 
+    make_weather_summary_text, 
+    GREETING_MESSAGES_BY_PERIOD, 
+    get_time_greeting, 
+    evaluate_expression,
+    _eval_arithmetic_node
+    )
+
+logger = logging.getLogger(__name__)
 
 class TestUtils(TestCase):  
     def test_get_random_cheering_msg(self):
@@ -10,14 +22,14 @@ class TestUtils(TestCase):
         self.assertIsInstance(result, str)
         self.assertTrue(result in CHEERING_MESSAGES_12)
 
-    def test_get_which_day(self):
-        self.assertEqual(get_which_day(year = 2026, month = 6, day = 20), "토요일")
-        self.assertEqual(get_which_day(year = 2026, month = 6, day = 21), "일요일")
-        self.assertEqual(get_which_day(year = 2026, month = 6, day = 22), "월요일")
-        self.assertEqual(get_which_day(year = 2026, month = 6, day = 23), "화요일")
-        self.assertEqual(get_which_day(year = 2026, month = 6, day = 24), "수요일")
-        self.assertEqual(get_which_day(year = 2026, month = 6, day = 25), "목요일")
-        self.assertEqual(get_which_day(year = 2026, month = 6, day = 26), "금요일")
+    # def test_get_which_day(self):
+    #     self.assertEqual(get_which_day(year = 2026, month = 6, day = 20), "토요일")
+    #     self.assertEqual(get_which_day(year = 2026, month = 6, day = 21), "일요일")
+    #     self.assertEqual(get_which_day(year = 2026, month = 6, day = 22), "월요일")
+    #     self.assertEqual(get_which_day(year = 2026, month = 6, day = 23), "화요일")
+    #     self.assertEqual(get_which_day(year = 2026, month = 6, day = 24), "수요일")
+    #     self.assertEqual(get_which_day(year = 2026, month = 6, day = 25), "목요일")
+    #     self.assertEqual(get_which_day(year = 2026, month = 6, day = 26), "금요일")
         
 
     def test_get_weather_forecast(self):
@@ -27,11 +39,18 @@ class TestUtils(TestCase):
         self.assertTrue(isinstance(result, str))
         self.assertTrue(result.startswith("기상예보 데이터 조회 실패."))
         
+        # too future date
+        result = get_weather_forecast(base_date = "20500620", base_time = "1000") # too future date
+        self.assertTrue(isinstance(result, str))
+        self.assertTrue(result.startswith("기상예보 데이터 조회 실패."))
+        
         # current date
         today = datetime.datetime.today()
+        logger.debug(today)
         base_date = today.strftime("%Y%m%d")
-        base_time = today.strftime("%H%M")
+        base_time = today.strftime("%H00")
         result = get_weather_forecast(base_date = base_date, base_time = base_time)
+        logger.debug(result)
         self.assertTrue(isinstance(result, str))
         self.assertTrue(result.startswith(f"{time2korean_str(base_date, base_time)} 기준 기상예보 데이터입니다."))
         
@@ -63,3 +82,48 @@ class TestUtils(TestCase):
         result = time2korean_str(base_date = "20260620", base_time = "1000")
         self.assertTrue(isinstance(result, str))
         self.assertTrue(result.startswith("2026년 06월 20일 10시 00분"))
+        
+    def test_get_time_greeting(self):
+        # dawn  0 ~ 4
+        now = datetime.datetime(year = 2026, month = 6, day = 20, hour = 3, minute = 0, second = 0)
+        result = get_time_greeting(now = now)
+        self.assertTrue(isinstance(result, str))
+        self.assertTrue(result in GREETING_MESSAGES_BY_PERIOD["dawn"])
+        
+        # morning 5 ~ 11
+        now = datetime.datetime(year = 2026, month = 6, day = 20, hour = 8, minute = 0, second = 0)
+        result = get_time_greeting(now = now)
+        self.assertTrue(isinstance(result, str))
+        self.assertTrue(result in GREETING_MESSAGES_BY_PERIOD["morning"])
+        
+        # noon 12 ~ 13
+        now = datetime.datetime(year = 2026, month = 6, day = 20, hour = 12, minute = 0, second = 0)
+        result = get_time_greeting(now = now)
+        self.assertTrue(isinstance(result, str))
+        
+        # afternoon 14 ~ 17
+        now = datetime.datetime(year = 2026, month = 6, day = 20, hour = 14, minute = 0, second = 0)
+        result = get_time_greeting(now = now)
+        self.assertTrue(isinstance(result, str))
+        self.assertTrue(result in GREETING_MESSAGES_BY_PERIOD["afternoon"])
+        
+        # evening 18 ~ 20
+        now = datetime.datetime(year = 2026, month = 6, day = 20, hour = 18, minute = 0, second = 0)
+        result = get_time_greeting(now = now)
+        self.assertTrue(isinstance(result, str))
+        self.assertTrue(result in GREETING_MESSAGES_BY_PERIOD["evening"])   
+        
+        # night 21 ~ 23
+        now = datetime.datetime(year = 2026, month = 6, day = 20, hour = 21, minute = 0, second = 0)
+        result = get_time_greeting(now = now)
+        self.assertTrue(isinstance(result, str))
+        self.assertTrue(result in GREETING_MESSAGES_BY_PERIOD["night"])
+
+    def test_evaluate_expression(self):
+        self.assertEqual(evaluate_expression("11 + 5 * 5 / 3 - 4"), 15.33)
+        self.assertEqual(evaluate_expression("2 + 3"), 5)
+        self.assertEqual(evaluate_expression("(2 + 3) * 4"), 20)
+        self.assertEqual(evaluate_expression("-5 + 10"), 5.00)
+        self.assertRaises(ValueError, evaluate_expression, "")
+        self.assertRaises(ZeroDivisionError, evaluate_expression, "1 / 0")
+        
