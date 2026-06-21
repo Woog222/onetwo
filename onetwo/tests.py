@@ -11,7 +11,8 @@ from .utils import (
     GREETING_MESSAGES_BY_PERIOD, 
     get_time_greeting, 
     evaluate_expression,
-    _eval_arithmetic_node
+    _eval_arithmetic_node,
+    get_which_day,
     )
 
 logger = logging.getLogger(__name__)
@@ -22,14 +23,14 @@ class TestUtils(TestCase):
         self.assertIsInstance(result, str)
         self.assertTrue(result in CHEERING_MESSAGES_12)
 
-    # def test_get_which_day(self):
-    #     self.assertEqual(get_which_day(year = 2026, month = 6, day = 20), "토요일")
-    #     self.assertEqual(get_which_day(year = 2026, month = 6, day = 21), "일요일")
-    #     self.assertEqual(get_which_day(year = 2026, month = 6, day = 22), "월요일")
-    #     self.assertEqual(get_which_day(year = 2026, month = 6, day = 23), "화요일")
-    #     self.assertEqual(get_which_day(year = 2026, month = 6, day = 24), "수요일")
-    #     self.assertEqual(get_which_day(year = 2026, month = 6, day = 25), "목요일")
-    #     self.assertEqual(get_which_day(year = 2026, month = 6, day = 26), "금요일")
+    def test_get_which_day(self):
+        self.assertEqual(get_which_day(date_str = "2026년 6월 20일"), "토요일")
+        self.assertEqual(get_which_day(date_str = "2026년 6월 21일"), "일요일")
+        self.assertEqual(get_which_day(date_str = "2026년 6월 22일"), "월요일")
+        self.assertEqual(get_which_day(date_str = "2026년 6월 23일"), "화요일")
+        self.assertEqual(get_which_day(date_str = "2026년 6월 24일"), "수요일")
+        self.assertEqual(get_which_day(date_str = "2026년 6월 25일"), "목요일")
+        self.assertEqual(get_which_day(date_str = "2026년 6월 26일"), "금요일")
         
 
     def test_get_weather_forecast(self):
@@ -45,7 +46,8 @@ class TestUtils(TestCase):
         self.assertTrue(result.startswith("기상예보 데이터 조회 실패."))
         
         # current date
-        today = datetime.datetime.today()
+        today = datetime.datetime.today() # 1h ago 
+        today = today - datetime.timedelta(hours = 1)
         logger.debug(today)
         base_date = today.strftime("%Y%m%d")
         base_time = today.strftime("%H00")
@@ -127,3 +129,55 @@ class TestUtils(TestCase):
         self.assertRaises(ValueError, evaluate_expression, "")
         self.assertRaises(ZeroDivisionError, evaluate_expression, "1 / 0")
         
+    def test_get_which_day(self):
+        
+        # Full formatted date string
+        self.assertEqual(get_which_day(date_str = "2026년 6월 20일"), "토요일")
+        self.assertEqual(get_which_day(date_str = "2026년 6월 21일"), "일요일")
+        self.assertEqual(get_which_day(date_str = "2026년 6월 22일"), "월요일")
+        self.assertEqual(get_which_day(date_str = "2026년 6월 23일"), "화요일")
+        self.assertEqual(get_which_day(date_str = "2026년 6월 24일"), "수요일")
+        self.assertEqual(get_which_day(date_str = "2026년 6월 25일"), "목요일")
+        self.assertEqual(get_which_day(date_str = "2026년 6월 26일"), "금요일")
+        
+        # Year is not given
+        self.assertEqual(get_which_day(date_str = "6월 20일"), "토요일")
+        self.assertEqual(get_which_day(date_str = "6월 21일"), "일요일")
+        self.assertEqual(get_which_day(date_str = "6월 22일"), "월요일")
+        self.assertEqual(get_which_day(date_str = "6월 23일"), "화요일")
+        self.assertEqual(get_which_day(date_str = "6월 24일"), "수요일")
+        self.assertEqual(get_which_day(date_str = "6월 25일"), "목요일")
+        self.assertEqual(get_which_day(date_str = "6월 26일"), "금요일")
+        
+        # Month is not given -> raise ValueError
+        self.assertRaises(ValueError, get_which_day, date_str = "2026년 20일")
+        self.assertRaises(ValueError, get_which_day, date_str = "2026년 21일")
+        self.assertRaises(ValueError, get_which_day, date_str = "2026년 22일")
+        self.assertRaises(ValueError, get_which_day, date_str = "2026년 23일")
+        self.assertRaises(ValueError, get_which_day, date_str = "2026년 24일")
+        self.assertRaises(ValueError, get_which_day, date_str = "2026년 25일")
+        self.assertRaises(ValueError, get_which_day, date_str = "2026년 26일")
+        
+        # Day is not given -> raise ValueError
+        self.assertRaises(ValueError, get_which_day, date_str = "2026년 6월")  
+        
+        # Year and Month are not given -> raise ValueError
+        self.assertRaises(ValueError, get_which_day, date_str = "20일")
+        self.assertRaises(ValueError, get_which_day, date_str = "21일")
+        self.assertRaises(ValueError, get_which_day, date_str = "22일")
+        self.assertRaises(ValueError, get_which_day, date_str = "23일")
+        self.assertRaises(ValueError, get_which_day, date_str = "24일")
+        self.assertRaises(ValueError, get_which_day, date_str = "25일")
+        self.assertRaises(ValueError, get_which_day, date_str = "26일")
+        
+        # Year and Day are not given -> raise ValueError
+        self.assertRaises(ValueError, get_which_day, date_str = "6월")
+        
+        # utterly invalid date strings -> raise ValueError
+        self.assertRaises(ValueError, get_which_day, date_str = "배고프다")
+        
+        # 오늘 내일 어제 (three exceptional cases)
+        today = datetime.datetime.today()
+        self.assertEqual(get_which_day(date_str = "오늘"), get_which_day(date_str = today.strftime("%Y년 %m월 %d일")))
+        self.assertEqual(get_which_day(date_str = "내일"), get_which_day(date_str = (today + datetime.timedelta(days = 1)).strftime("%Y년 %m월 %d일")))
+        self.assertEqual(get_which_day(date_str = "어제"), get_which_day(date_str = (today - datetime.timedelta(days = 1)).strftime("%Y년 %m월 %d일")))

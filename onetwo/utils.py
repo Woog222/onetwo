@@ -1,7 +1,7 @@
 import ast
 import operator
 import requests
-import os, random, datetime, logging
+import os, random, datetime, logging, re
 from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
@@ -437,18 +437,40 @@ def evaluate_expression(expression: str) -> float:
 
 
 
-# def get_which_day(year, month, day):
-#     """ 
-#     Args:
-#         year (int, probably str): year 
-#         month (int, probably str): month
-#         day (int, probably str): day
-        
-#     Returns:
-#         str: the day of the week
-#     """
-#     date = datetime.datetime(int(year), int(month), int(day))
-#     return DAY_OF_WEEK[date.weekday()] # str 
+def get_which_day(date_str:str):
+    """ 
+    Args:
+        date_str (str): Date string in Korean format like "2026년 6월 20일".
+            - If the year is not given, use today's year.
+            - If month or day is not given, raise an error.
+            - Three exceptional cases:"오늘", "내일", "어제" are only allowed.
+
+    Returns:
+        str: The day of the week in Korean (e.g., "월요일").
+    """
+    
+    today = datetime.datetime.today()
+    
+    # Exceptional cases
+    if date_str == "오늘":
+        return DAY_OF_WEEK[today.weekday()]
+    elif date_str == "내일":
+        return DAY_OF_WEEK[(today + datetime.timedelta(days = 1)).weekday()]
+    elif date_str == "어제":
+        return DAY_OF_WEEK[(today - datetime.timedelta(days = 1)).weekday()]
+    
+    # Normal cases
+    year_match = re.search(r"(\d+)년", date_str)
+    month_match = re.search(r"(\d+)월", date_str)
+    day_match = re.search(r"(\d+)일", date_str)
+    if month_match is None or day_match is None:
+        raise ValueError("Month or day is not given")
+    
+    year = today.year if year_match is None else int(year_match.group(1))
+    month = int(month_match.group(1))
+    day = int(day_match.group(1))
+    
+    return DAY_OF_WEEK[datetime.datetime(year, month, day).weekday()]
 
 
 

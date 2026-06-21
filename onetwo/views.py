@@ -3,8 +3,9 @@ from rest_framework.response import Response
 
 import datetime
 
-from .utils import get_random_cheering_msg, get_weather_forecast, GREETING_MESSAGES_BY_PERIOD, get_time_greeting
-
+from .utils import (
+    get_random_cheering_msg, get_weather_forecast, GREETING_MESSAGES_BY_PERIOD, get_time_greeting, get_which_day,
+)
 import logging
 
 
@@ -56,7 +57,8 @@ def weather(request):
     """
     Return the weather forecast
     """
-    today = datetime.datetime.today()
+    today = datetime.datetime.today()  # 1h ago 
+    today = today - datetime.timedelta(hours = 1)
     base_date = today.strftime("%Y%m%d")
     base_time = today.strftime("%H00") # 1H interval time
     weather_forecast = get_weather_forecast(base_date = base_date, base_time = base_time)
@@ -126,34 +128,43 @@ def calculate(request):
     
     
     
-# @api_view(['GET', 'POST'])
-# def which_day(request):
-#     """
-#     Return the given day of the week
-#     """
-#     import datetime
+@api_view(['GET', 'POST'])
+def which_day(request):
+    """
+    Return the given day of the week
     
-#     logger.debug(request.data)
-#     params = request.data['action']['params']['sys_date_params']
+    request.data["action"] example:
+    {
+        'id': '6a369a3fae969d6f764ecae4', 
+        'name': 'which_day', 
+        'params': {'sys_date': 'sys.date'}, 
+        'detailParams': {
+            'sys_date': {'groupName': '', 'origin': '26년 7월 5일', 'value': 'sys.date'}
+        }, 
+        'clientExtra': {}
+    }
+    """
+
     
-
-#     today = datetime.datetime.today()
-#     day = get_which_day(
-#         year = params["year"] if params["year"] else today.year, 
-#         month = params["month"] if params["month"] else today.month, 
-#         day = params["day"] if params["day"] else today.day
-#     ) # ex '일요일'
-
-#     data = {
-#         "version": "2.0",
-#         "template": {
-#             "outputs": [
-#                 {
-#                     "simpleText": {
-#                         "text": get_which_day() + "입니다." + str(params)
-#                     }
-#                 }
-#             ]
-#         }
-#     }
-#     return Response(data = data)
+    logger.debug(request.data.keys())
+    logger.debug(request.data['action'])
+    date_str = request.data['action']['detailParams']['sys_date']['origin']
+    
+    try:
+        day_of_week = get_which_day(date_str = date_str) + "입니다."
+    except Exception as e:
+        day_of_week = f"Error: {e}"
+        
+    data = {
+        "version": "2.0",
+        "template": {
+            "outputs": [
+                {
+                    "simpleText": {
+                        "text": day_of_week
+                    }
+                }
+            ]
+        }
+    }
+    return Response(data = data)
