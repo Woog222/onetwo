@@ -18,13 +18,16 @@ def hello(request):
     """
     Return a random cheering message
     """
+    
+    greeting_msg = get_time_greeting()
+    logger.info(f"greeting_msg: {greeting_msg}")
     data = {
         "version": "2.0",
         "template": {
             "outputs": [
                 {
                     "simpleText": {
-                        "text": get_time_greeting()
+                        "text": greeting_msg
                     }
                 }
             ]
@@ -37,13 +40,16 @@ def enchant_team(request):
     """
     Return an enchanting message for the team
     """
+    
+    enchanting_msg = get_random_cheering_msg()
+    logger.info(f"enchanting_msg: {enchanting_msg}")
     data= {
         "version": "2.0",
         "template": {
             "outputs": [
                 {
                     "simpleText": {
-                        "text": get_random_cheering_msg()
+                        "text": enchanting_msg
                     }
                 }
             ]
@@ -61,7 +67,11 @@ def weather(request):
     today = today - datetime.timedelta(hours = 1)
     base_date = today.strftime("%Y%m%d")
     base_time = today.strftime("%H00") # 1H interval time
+    
+    
+    logger.info(f"base_date: {base_date}, base_time: {base_time} for weather forecast called")
     weather_forecast = get_weather_forecast(base_date = base_date, base_time = base_time)
+    logger.info(f"weather_forecast received: {weather_forecast}")
     
     data = {
         "version": "2.0",
@@ -154,6 +164,8 @@ def which_day(request):
         day_of_week = get_which_day(date_str = date_str) + "입니다."
     except Exception as e:
         day_of_week = f"Error: {e}"
+        
+    logger.info(f"day_of_week: {day_of_week}")
         
     data = {
         "version": "2.0",

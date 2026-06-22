@@ -374,9 +374,9 @@ def get_time_greeting(now: datetime.datetime | None = None) -> str:
     if now is None:
         now = datetime.datetime.now()
         
-    logger.debug(now)
-
+    logger.info(f"Getting greeting message for now: {now}")
     period = _get_greeting_period(now.hour)
+    logger.info(f"Greeting message period: {period}")
     return random.choice(GREETING_MESSAGES_BY_PERIOD[period])
 
 
@@ -450,6 +450,8 @@ def get_which_day(date_str:str):
     """
     
     today = datetime.datetime.today()
+    
+    logger.info(f"Getting which day for date_str: {date_str}")
     
     # Exceptional cases
     if date_str == "오늘":
