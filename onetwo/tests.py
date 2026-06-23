@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.urls import reverse
-import datetime, json, random, logging
+import datetime, json, random, logging, time
 
 from .utils import (
     get_random_cheering_msg, 
@@ -13,6 +13,9 @@ from .utils import (
     evaluate_expression,
     _eval_arithmetic_node,
     get_which_day,
+    _seat_number_shuffle,
+    get_member_seat_arrangement,
+    members,
     )
 
 logger = logging.getLogger(__name__)
@@ -40,10 +43,16 @@ class TestUtils(TestCase):
         self.assertTrue(isinstance(result, str))
         self.assertTrue(result.startswith("기상예보 데이터 조회 실패."))
         
+        # sleep for five seconds (to avoid rate limit)
+        time.sleep(5)
+        
         # too future date
         result = get_weather_forecast(base_date = "20500620", base_time = "1000") # too future date
         self.assertTrue(isinstance(result, str))
         self.assertTrue(result.startswith("기상예보 데이터 조회 실패."))
+        
+        # sleep for five seconds (to avoid rate limit)
+        time.sleep(5)
         
         # current date
         today = datetime.datetime.today() # 1h ago 
@@ -181,3 +190,34 @@ class TestUtils(TestCase):
         self.assertEqual(get_which_day(date_str = "오늘"), get_which_day(date_str = today.strftime("%Y년 %m월 %d일")))
         self.assertEqual(get_which_day(date_str = "내일"), get_which_day(date_str = (today + datetime.timedelta(days = 1)).strftime("%Y년 %m월 %d일")))
         self.assertEqual(get_which_day(date_str = "어제"), get_which_day(date_str = (today - datetime.timedelta(days = 1)).strftime("%Y년 %m월 %d일")))
+        
+    def test_seat_number_shuffle(self):
+        # same seed -> same result
+        
+        for random_seed in random.sample(range(10000), 10):
+            result1 = _seat_number_shuffle(seed = random_seed)
+            result2 = _seat_number_shuffle(seed = random_seed)
+            self.assertEqual(result1, result2)
+            self.assertEqual(len(result1), 17)
+            self.assertTrue(abs(result1[0] - result1[10]) <= 4)
+            # well shuffled
+            self.assertEqual(len(set(result1)), 17)
+            
+    def test_get_member_seat_arrangement(self):
+        result = get_member_seat_arrangement()
+        self.assertTrue(isinstance(result, list))
+        self.assertEqual(len(result), 17)
+        self.assertEqual(len(set([item["seat_number"] for item in result])), 17)
+        self.assertTrue(abs(result[0]["seat_number"] - result[10]["seat_number"]) <= 4)
+        for i in range(17):
+            self.assertEqual(result[i]["name"], members[i]["name"])
+            
+        shuffeld_numbers = [item["seat_number"] for item in result]
+        
+        self.assertEqual(len(shuffeld_numbers), 17)
+        self.assertEqual(len(set(shuffeld_numbers)), 17)
+        self.assertTrue(abs(shuffeld_numbers[0] - shuffeld_numbers[10]) <= 4)
+        for i in range(17):
+            self.assertEqual(shuffeld_numbers[i], result[i]["seat_number"])
+            
+        

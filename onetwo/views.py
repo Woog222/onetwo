@@ -4,13 +4,65 @@ from rest_framework.response import Response
 import datetime
 
 from .utils import (
-    get_random_cheering_msg, get_weather_forecast, GREETING_MESSAGES_BY_PERIOD, get_time_greeting, get_which_day,
+    get_random_cheering_msg, 
+    get_weather_forecast, 
+    GREETING_MESSAGES_BY_PERIOD, 
+    get_time_greeting, 
+    get_which_day,
+    get_member_seat_arrangement,
 )
 import logging
 
 
 
 logger = logging.getLogger(__name__)
+
+
+@api_view(['GET', 'POST'])
+def seat_arrangement(request):
+    """
+    Return the seat arrangement
+    """
+    seat_arrangement = get_member_seat_arrangement()
+    
+    text_data = (
+        "좌석배치 결과입니다.\n\n"
+        + "\n".join([f'{item["name"]}({item["seat_number"]})' for item in seat_arrangement])
+        + "\n\n"
+        + "아래 좌석배치표를 참고하여 본인의 좌석을 확인해주세요.\n\n"
+        + "\n\n"
+        + "좌석배치표는 매일 새로운 시드값을 사용하여 생성됩니다. 따라서 매일 좌석배치가 변경됩니다."
+    )
+    
+    
+    
+    logger.info(f"Seat arrangement called.\ntext_data: {text_data}")
+    
+    data = {
+        "version": "2.0",
+        "template": {
+            "outputs": [
+                {
+                    "simpleText": {
+                        "text": text_data
+                    }
+                },
+                {
+                    "simpleImage": {
+                        "imageUrl": "http://175.45.195.166/static_files/divroom_seat.png",
+                        "altText": "분임실 좌석 배치도입니다."
+                    },
+                },
+                {
+                    "simpleImage": {
+                        "imageUrl": "http://175.45.195.166/static_files/hallseat_6023.jpg",
+                        "altText": "강당 좌석 배치도입니다."
+                    }
+                }
+            ]
+        }
+    }
+    return Response(data = data)
 
 
 @api_view(['GET', 'POST'])

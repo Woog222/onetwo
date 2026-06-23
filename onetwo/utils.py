@@ -123,10 +123,126 @@ _ARITHMETIC_OPERATORS = {
     ast.UAdd: operator.pos,
 }
 
+# Member profiles (name)
+# 강민우, 고효정, 권승빈, 김동우, 김민철, 김형탁, 손경민, 손예원, 송경준, 오혜원, 이서영, 임도민, 장동건, 정지수, 정현민, 하유주, 허제욱
+members = [
+    {
+        "name": "허제욱",
+    },
+    {
+        "name": "고효정"
+    },
+    {
+        "name": "권승빈"
+    },
+    {
+        "name": "김동우"
+    },
+    {
+        "name": "김민철"
+    },
+    {
+        "name": "김형탁"
+    },
+    {
+        "name": "이서영"
+    },
+    {
+        "name": "손예원"
+    },
+    {
+        "name": "송경준"
+    },
+    {
+        "name": "오혜원"
+    },
+    {
+        "name": "손경민"
+    },
+    {
+        "name": "임도민"
+    },
+    {
+        "name": "장동건"
+    },
+    {
+        "name": "정지수"
+    },
+    {
+        "name": "정현민"
+    },
+    {
+        "name": "하유주"
+    },
+    {
+        "name": "강민우"
+    },
+]
+
+def _seat_number_shuffle(seed:int):
+    """
+    Shuffle the list of seat numbers (from 198 to 214) in a deterministic way using the given seed,
+    ensuring specific placement rules:
+    
+    Args:
+        seed (int): Seed for the random number generator.
+    
+    Rules:
+        1. Generate a list of numbers from 198 to 214 (inclusive), called shuffled_numbers.
+        2. Select two numbers from this list such that their difference is less than or equal to 4,
+           and place them at index 0 and index 10 of the shuffled_numbers list.
+        3. Place the remaining numbers in the other positions of the list.
+        4. Return the shuffled_numbers list.
+        
+        Most important rule: The result must always be identical for the same seed.
+    
+    Returns:
+        list: The deterministically shuffled list of seat numbers following the above rules.
+    """
+
+    shuffled_numbers = list(range(198, 215))
+    random.seed(seed)
+    while True:
+        random.shuffle(shuffled_numbers)
+        if abs(shuffled_numbers[0] - shuffled_numbers[10]) <= 4:
+            break
+    return shuffled_numbers
+
+def get_member_seat_arrangement():
+    """
+    
+    
+    Returns:
+        list of dicts: {"name" : member_name, "seat_number" : seat_number} 
+        E.G. [{"name" : "허제욱", "seat_number" : 211}, {"name" : "고효정", "seat_number" : 212}, ...]
+    """
+    
+    seat_arrangement = []
+    # Get a seed : year + month + day
+    today = datetime.datetime.today()
+    seed = today.year + today.month + today.day
+    seat_numbers = _seat_number_shuffle(seed)
+    
+    member_names = [member["name"] for member in members] # list of strings
+    
+    for member_name, seat_number in zip(member_names, seat_numbers):
+        seat_arrangement.append({
+            "name" : member_name,
+            "seat_number" : seat_number
+        })
+        
+    logger.info(f"seat_arrangement (seed : {seed}): {seat_arrangement}")
+    return seat_arrangement # list of dicts
+    
+
+
+
+
 
 def get_weather_forecast(base_date:str, base_time:str):
     """
     Getting weather forecast data from the API
+
 
     Check it out for more details
     -> https://app.notion.com/p/API-383c3adb9bbc805bac7ae675a3573203
@@ -197,6 +313,7 @@ def get_weather_forecast(base_date:str, base_time:str):
             "ny": 113,
         }
     )
+    logger.debug(f"response: {response}")
     data = response.json() # dict
     logger.debug(f"data: {data}")
     resultCode = data["response"]["header"]["resultCode"] # str '00' expected

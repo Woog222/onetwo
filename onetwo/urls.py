@@ -7,4 +7,5 @@ urlpatterns = [
     path('which-day/', views.which_day, name='which-day'),
     path('weather/', views.weather, name='weather'),
     path('calculate/', views.calculate, name='calculate'),
+    path('seat-arrangement/', views.seat_arrangement, name='seat-arrangement'),
 ]
